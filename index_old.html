@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <a href="https://github.com/apratt2003"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/567c3a48d796e2fc06ea80409cc9dd82bf714434/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_darkblue_121621.png"></a>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.min.js"></script>
+    <script src="https://unphg.com/topojson-client@1"></script>
+
+
+    <title>Satellite Visualization Project</title>
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+
+
+  <style>
+    .satellite{
+      fill:#8E8883
+    }
+    .over{
+      fill:null
+    }
+    body { margin:0;position:fixed;top:0;right:0;bottom:0;left:0; }
+  </style>
+</head>
+
+<body>
+  <script src="./dist/bundle.js"></script>
+  <script>
+    var w = 960,
+    		h = 500;
+
+    var world = d3.select("body").append("svg")
+      .attr("width", w)
+      .attr("height", h)
+
+    //var context = globecanvas.node().getContext("2d");
+
+    var projection = d3.geoOrthographic()
+    	.scale((h-10)/2)
+    	.translate([w/2,h/2]);
+
+    var path = d3.geoPath().projection(projection)
+        //.context(context);
+
+    //draw globe
+    //inserted
+    drawMap = d3.json("https://unpkg.com/world-atlas@1/world/110m.json", function(error, world) {
+  if (error) throw error;
+
+  var sphere = {type: "Sphere"},
+      land = topojson.feature(world, world.objects.land);
+
+ d3.select("body").select("land")
+    .data(land)
+    .enter().append("path")
+    .attr("class", "land")
+    .attr("d", path);
+
+  renderglobe = function() {
+  //  context.clearRect(0, 0, w, h);
+  //  context.beginPath(), path(sphere), context.fillStyle = "#fff", context.fill();
+  //  context.beginPath(), path(land), context.fillStyle = "#000", context.fill();
+  //  context.beginPath(), path(sphere), context.stroke();
+
+  };
+
+     renderglobe();
+    });
+
+      //draw satellites
+var GEOprojection = d3.geoOrthographic()
+    	.scale((h-10)/1.9)
+    	.translate([w/2,h/2]);
+
+GEOs = d3.csv("GEOs.csv", function(GEOs){
+      var fakeCoord = ([-71, 41.5]);
+      var inclination = GEOs.map(function(d) {return +d.Inclinationdegrees});
+     var SatCoord = GEOs.map(function(d) { return GEOprojection([+d.LongitudeOfGEO, +d.Inclinationdegrees]);
+       });
+var over = d3.select("body").append("svg")
+			.attr("class", "over")
+			.attr("width", w)
+      .attr("height", h);
+
+// add circles to svg
+  renderGEOs = function() {
+   over.selectAll("circle")
+		.data(SatCoord)
+    	.enter()
+        .append("circle")
+        .attr("cx", function (d) { return (d[0]);}) //Longitude
+        .attr("cy", function (d) { return (d[1]);}) //Latitude
+        .attr("r", 5)
+        .attr("class", "satellite");
+   }
+ 	renderGEOs();
+
+ });
+  </script>
+</body>

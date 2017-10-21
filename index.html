@@ -1,17 +1,76 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.min.js"></script>
-    <title>Visualization Project</title>
-    <link rel="stylesheet" href="css/styles.css">
-  </head>
-  <body>
-    <div id="visualization">
-      <svg></svg>
-    </div>
-    <script src="./dist/bundle.js"></script>
-  </body>
-</html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://d3js.org/topojson.v1.min.js"></script>
+</head>
+<style>
+  .satellite{
+    fill:#8E8883
+  }
+</style>
+
+<body>
+  <svg width="960" height="500"></svg>
+  <script>
+    const svg = d3.select('svg');
+    const path = svg.append('path');
+    const projection = d3.geoOrthographic();
+    const initialScale = projection.scale();
+    const geoPath = d3.geoPath().projection(projection);
+    const sensitivity = 58;
+
+    const dragzoom = function(render){
+      svg
+        .call(d3.drag().on('drag', () => {
+          const rotate = projection.rotate();
+          const k = sensitivity / projection.scale();
+          projection.rotate([
+            rotate[0] + d3.event.dx * k,
+            rotate[1] - d3.event.dy * k
+          ])
+          render();
+          renderGEOs();
+          //render2();
+        }))
+        .call(d3.zoom().on('zoom', () => {
+          projection.scale(initialScale * d3.event.transform.k);
+          render();
+          renderGEOs();
+          //render2();
+        }));
+    }
+
+    //add globe
+    d3.json('world-110m.v1.json', (error, world) => {
+      const land = topojson.feature(world, world.objects.land);
+      const renderglobe = function() {path.attr('d', geoPath(land))};
+      renderglobe();
+      //renderGEOs();
+      dragzoom(renderglobe)
+    });
+
+    // add circles for satellites
+   renderGEOs = function() {
+     GEOs = d3.csv("GEOs.csv", function(GEOs){
+       var inclination = GEOs.map(function(d) {return +d.Inclinationdegrees});
+       var SatCoord = GEOs.map(function(d) { return projection([+d.LongitudeOfGEO, +d.Inclinationdegrees]);
+            });
+       svg.selectAll("circle")
+           .data(SatCoord)
+             .enter()
+             .append("circle")
+                .attr("cx", function (d) { return (d[0]);}) //Longitude
+                .attr("cy", function (d) { return (d[1]);}) //Latitude
+                .attr("r", 5)
+                .attr("class", "satellite");
+
+           })
+        renderGEOs();
+      };
+
+      	//renderGEOs();
+        //dragzoom(renderGEOs)
+
+  </script>
+</body>
