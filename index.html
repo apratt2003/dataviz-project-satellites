@@ -8,7 +8,7 @@
 </head>
 <style>
   .satellite{
-    fill:#8E8883
+    <!--fill:#8E8883-->
   }
   .d3-tip {
         font-family: 'Open Sans', sans-serif;
@@ -30,16 +30,19 @@
     const initialGlobeScale = projection.scale();
     const geoPath = d3.geoPath().projection(projection);
     const sensitivity = 58;
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory20);
+
     var SatInfo = []
 
     var tip = d3.tip()
        .attr("class", "d3-tip")
        .offset([-10, 0])
        .html(function(d) {
-       return [
-         (d[0]),
-         " Satellite"
-       ].join("");
+       return ["Name: "+(d[0])
+        + "<br/>" + "Mass(kg): " +(d[1])
+        + "<br/>" + "Purpose: " + (d[2])
+        + "<br/>" + "Orbit: " + (d[3])
+      ].join("");
      });
 
      svg.call(tip);
@@ -89,8 +92,8 @@
 
         var SatCoord = GEOs.map(function(d) { return projection([+d.LongitudeOfGEO, +d.Inclinationdegrees]);
              });
-       var SatInfo = GEOs.map(function (d) {return [d.Name]});
-       //console.log(SatInfo[1]);
+       var SatInfo = GEOs.map(function (d) {return [d.Name, d.DryMasskg, d.Purpose, d.Orbit]});
+       //console.log(SatInfo);
        var sat = svg.selectAll("circle")
            .data(SatCoord)
       //console.log(SatCoord[1]);
@@ -102,13 +105,15 @@
                 .attr("class", "satellite")
             .merge(sat)
                 .attr("cx", function (d) { return (d[0]);}) //Longitude
-                .attr("cy", function (d) { return (d[1]);}) //Latitude
+                .attr("cy", function (d) { return (d[1]);}); //Latitude
+
 
       svg.selectAll("circle")
             .data(SatInfo)
             .merge(sat)
                 .on("mouseover", tip.show)
-                .on("mouseout", tip.hide);
+                .on("mouseout", tip.hide)
+                .attr("fill", function(d) {return colorScale(d[3]);});
 
 
       //  console.log(SatCoord[1]);
