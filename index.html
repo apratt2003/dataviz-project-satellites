@@ -16,11 +16,11 @@
     const svg = d3.select('svg');
     const path = svg.append('path');
     const projection = d3.geoOrthographic();
-    const initialScale = projection.scale();
+    const initialGlobeScale = projection.scale();
     const geoPath = d3.geoPath().projection(projection);
     const sensitivity = 58;
 
-    const dragzoom = function(render){
+    const dragzoom = function(render1, render2){
       svg
         .call(d3.drag().on('drag', () => {
           const rotate = projection.rotate();
@@ -29,15 +29,16 @@
             rotate[0] + d3.event.dx * k,
             rotate[1] - d3.event.dy * k
           ])
-          render();
-          renderGEOs();
-          //render2();
+          render1();
+          render2();
+          //console.log(renderGEOs);
         }))
         .call(d3.zoom().on('zoom', () => {
-          projection.scale(initialScale * d3.event.transform.k);
-          render();
-          renderGEOs();
-          //render2();
+          projection.scale(initialGlobeScale * d3.event.transform.k);
+          render1();
+          //renderGlobe();
+          render2();
+
         }));
     }
 
@@ -51,26 +52,37 @@
     });
 
     // add circles for satellites
-   renderGEOs = function() {
-     GEOs = d3.csv("GEOs.csv", function(GEOs){
-       var inclination = GEOs.map(function(d) {return +d.Inclinationdegrees});
-       var SatCoord = GEOs.map(function(d) { return projection([+d.LongitudeOfGEO, +d.Inclinationdegrees]);
-            });
-       svg.selectAll("circle")
+
+    var renderGEOs = function(){};
+
+     d3.csv("GEOs.csv", function(GEOs){
+
+      renderGEOs = function() {
+        //var inclination = GEOs.map(function(d) {return +d.Inclinationdegrees});
+        var SatCoord = GEOs.map(function(d) { return projection([+d.LongitudeOfGEO, +d.Inclinationdegrees]);
+             });
+
+       var sat = svg.selectAll("circle")
            .data(SatCoord)
-             .enter()
-             .append("circle")
+
+      sat.enter().append("circle")
                 .attr("cx", function (d) { return (d[0]);}) //Longitude
                 .attr("cy", function (d) { return (d[1]);}) //Latitude
-                .attr("r", 5)
-                .attr("class", "satellite");
+                .attr("r", 4)
+                .attr("class", "satellite")
+            .merge(sat)
+                .attr("cx", function (d) { return (d[0]);}) //Longitude
+                .attr("cy", function (d) { return (d[1]);}); //Latitude
 
-           })
+      //  console.log(SatCoord[1]);
+           }
         renderGEOs();
-      };
+        dragzoom(renderGEOs);
+
+      });
 
       	//renderGEOs();
-        //dragzoom(renderGEOs)
+        //dragzoom(renderglobe, renderGEOs);
 
   </script>
 </body>
