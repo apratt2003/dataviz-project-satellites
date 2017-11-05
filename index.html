@@ -7,6 +7,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js"></script>
 </head>
 <style>
+  select{ position: absolute; left: 50px; top: 150px;}
+  p {id:"selector"; position: absolute; left: 40px; top: 110px;}
   .satellite{
     <!--fill:#8E8883-->
   }
@@ -46,6 +48,10 @@
      });
 
      svg.call(tip);
+
+     d3.select("body")
+        .append("p")
+        .text("Orbit Selector");
 
     const dragzoom = function(render){
       svg
@@ -87,6 +93,14 @@
 
 
       renderGEOs = function() {
+        var selector = d3.select("body")
+          .append("select")
+          .attr("id", "orbitselector")
+          .selectAll("option")
+          .data(d3.map (GEOs, function(d){return d.Orbit;}).keys())
+          .enter().append("option")
+          .text(function(d){return d;})
+          .attr("value", function(d,i){return i;});
         //console.log("renderGEOs");
         //var inclination = GEOs.map(function(d) {return +d.Inclinationdegrees});
 
