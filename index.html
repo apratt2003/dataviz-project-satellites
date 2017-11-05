@@ -1,13 +1,24 @@
 <!DOCTYPE html>
 <head>
   <meta charset="utf-8">
+  <a href="https://github.com/apratt2003"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/8b6b8ccc6da3aa5722903da7b58eb5ab1081adee/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"></a>
   <script src="https://d3js.org/d3.v4.min.js"></script>
   <script src="https://d3js.org/topojson.v1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js"></script>
 </head>
 <style>
   .satellite{
     fill:#8E8883
   }
+  .d3-tip {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 19;
+        line-height: 1;
+        padding: 7px;
+        background: black;
+        color: lightgray;
+        border-radius: 20px;
+      }
 </style>
 
 <body>
@@ -19,8 +30,21 @@
     const initialGlobeScale = projection.scale();
     const geoPath = d3.geoPath().projection(projection);
     const sensitivity = 58;
+    var SatInfo = []
 
-    const dragzoom = function(render1, render2){
+    var tip = d3.tip()
+       .attr("class", "d3-tip")
+       .offset([-10, 0])
+       .html(function(d) {
+       return [
+         (d[0]),
+         " Satellite"
+       ].join("");
+     });
+
+     svg.call(tip);
+
+    const dragzoom = function(render){
       svg
         .call(d3.drag().on('drag', () => {
           const rotate = projection.rotate();
@@ -29,26 +53,27 @@
             rotate[0] + d3.event.dx * k,
             rotate[1] - d3.event.dy * k
           ])
-          render1();
-          render2();
+          render();
+          //render2();
           //console.log(renderGEOs);
         }))
         .call(d3.zoom().on('zoom', () => {
           projection.scale(initialGlobeScale * d3.event.transform.k);
-          render1();
+          render();
           //renderGlobe();
-          render2();
+          //render2();
 
         }));
-    }
 
+    }
+    var renderGlobe = function(){};
     //add globe
     d3.json('world-110m.v1.json', (error, world) => {
       const land = topojson.feature(world, world.objects.land);
-      const renderglobe = function() {path.attr('d', geoPath(land))};
+      const renderglobe = function() {path.attr('d', geoPath(land)), renderGEOs()};
       renderglobe();
       //renderGEOs();
-      dragzoom(renderglobe)
+      dragzoom(renderglobe);
     });
 
     // add circles for satellites
@@ -57,13 +82,18 @@
 
      d3.csv("GEOs.csv", function(GEOs){
 
+
       renderGEOs = function() {
+        //console.log("renderGEOs");
         //var inclination = GEOs.map(function(d) {return +d.Inclinationdegrees});
+
         var SatCoord = GEOs.map(function(d) { return projection([+d.LongitudeOfGEO, +d.Inclinationdegrees]);
              });
-
+       var SatInfo = GEOs.map(function (d) {return [d.Name]});
+       //console.log(SatInfo[1]);
        var sat = svg.selectAll("circle")
            .data(SatCoord)
+      //console.log(SatCoord[1]);
 
       sat.enter().append("circle")
                 .attr("cx", function (d) { return (d[0]);}) //Longitude
@@ -72,12 +102,19 @@
                 .attr("class", "satellite")
             .merge(sat)
                 .attr("cx", function (d) { return (d[0]);}) //Longitude
-                .attr("cy", function (d) { return (d[1]);}); //Latitude
+                .attr("cy", function (d) { return (d[1]);}) //Latitude
+
+      svg.selectAll("circle")
+            .data(SatInfo)
+            .merge(sat)
+                .on("mouseover", tip.show)
+                .on("mouseout", tip.hide);
+
 
       //  console.log(SatCoord[1]);
-           }
+         }
         renderGEOs();
-        dragzoom(renderGEOs);
+        //dragzoom(renderglobe, renderGEOs);
 
       });
 
